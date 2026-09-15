@@ -3,6 +3,7 @@ from typing import Optional
 
 from pydantic import BaseModel, field_validator
 
+
 class TmdbGenre(BaseModel):
     id: int
     name: str
@@ -10,6 +11,27 @@ class TmdbGenre(BaseModel):
 
 class TmdbGenreListResponse(BaseModel):
     genres: list[TmdbGenre]
+
+
+class TmdbCastMember(BaseModel):
+    id: int
+    name: str
+    character: str = ""
+    order: int
+    profile_path: Optional[str] = None
+
+
+class TmdbCrewMember(BaseModel):
+    id: int
+    name: str
+    job: str
+    department: str
+    profile_path: Optional[str] = None
+
+
+class TmdbCredits(BaseModel):
+    cast: list[TmdbCastMember] = []
+    crew: list[TmdbCrewMember] = []
 
 
 class TmdbMovie(BaseModel):
@@ -24,6 +46,15 @@ class TmdbMovie(BaseModel):
     poster_path: Optional[str] = None
     backdrop_path: Optional[str] = None
     genres: list[TmdbGenre] = []
+    credits: Optional[TmdbCredits] = None
+
+    @field_validator("release_date", mode="before")
+    @classmethod
+    def empty_string_to_none(cls, v):
+        if v == "":
+            return None
+        return v
+
 
 class TmdbDiscoverMovie(BaseModel):
     id: int
@@ -32,16 +63,16 @@ class TmdbDiscoverMovie(BaseModel):
     release_date: Optional[date] = None
     poster_path: Optional[str] = None
 
+    @field_validator("release_date", mode="before")
+    @classmethod
+    def empty_string_to_none(cls, v):
+        if v == "":
+            return None
+        return v
+
 
 class TmdbDiscoverResponse(BaseModel):
     page: int
     total_pages: int
     total_results: int
     results: list[TmdbDiscoverMovie]
-
-@field_validator("release_date", mode="before")
-@classmethod
-def empty_string_to_none(cls, v):
-    if v == "":
-        return None
-    return v

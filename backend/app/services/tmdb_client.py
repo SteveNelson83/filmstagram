@@ -23,7 +23,10 @@ class TmdbClient:
         return TmdbGenreListResponse.model_validate(data)
 
     def get_movie(self, tmdb_id: int) -> TmdbMovie:
-        data = self._get(f"movie/{tmdb_id}")
+        data = self._get(
+            f"movie/{tmdb_id}",
+            params={"append_to_response": "credits"},
+        )
         return TmdbMovie.model_validate(data)
 
     def discover_movies(self, page: int = 1, **filters) -> TmdbDiscoverResponse:

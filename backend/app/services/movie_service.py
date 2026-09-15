@@ -1,8 +1,15 @@
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.movie import Movie
+from app.models.movie_cast import MovieCast
+from app.models.movie_crew import MovieCrew
+from app.schemas.tmdb import TmdbCastMember, TmdbMovie
 from app.services.genre_service import GenreService
+from app.services.person_service import PersonService
 from app.services.tmdb_client import TmdbClient
+
+TOP_CAST_COUNT = 5
+DIRECTOR_JOB = "Director"
 
 
 class MovieService:
@@ -34,9 +41,72 @@ class MovieService:
             if genre:
                 movie.genres.append(genre)
 
+        self.db.flush()
+        self._import_credits(movie, tmdb_movie)
+
         self.db.commit()
         self.db.refresh(movie)
         return movie
+
+    def _import_credits(self, movie: Movie, tmdb_movie: TmdbMovie) -> None:
+        if not tmdb_movie.credits:
+            return
+
+        self.db.query(MovieCast).filter(MovieCast.movie_id == movie.id).delete()
+        self.db.query(MovieCrew).filter(MovieCrew.movie_id == movie.id).delete()
+
+        person_service = PersonService(self.db)
+
+        cast_by_person: dict[int, TmdbCastMember] = {}
+        for member in tmdb_movie.credits.cast:
+            existing = cast_by_person.get(member.id)
+            if existing is None or member.order < existing.order:
+                cast_by_person[member.id] = member
+
+        top_cast = sorted(cast_by_person.values(), key=lambda m: m.order)[
+            :TOP_CAST_COUNT
+        ]
+
+        for member in top_cast:
+            person = person_service.get_or_create(
+                tmdb_id=member.id,
+                name=member.name,
+                profile_path=member.profile_path,
+            )
+            self.db.flush()
+            self.db.add(
+                MovieCast(
+                    movie_id=movie.id,
+                    person_id=person.id,
+                    character=member.character or "",
+                    order=member.order,
+                )
+            )
+
+        seen_directors: set[int] = set()
+        for member in tmdb_movie.credits.crew:
+            if member.job != DIRECTOR_JOB:
+                continue
+
+            person = person_service.get_or_create(
+                tmdb_id=member.id,
+                name=member.name,
+                profile_path=member.profile_path,
+            )
+            self.db.flush()
+
+            if person.id in seen_directors:
+                continue
+            seen_directors.add(person.id)
+
+            self.db.add(
+                MovieCrew(
+                    movie_id=movie.id,
+                    person_id=person.id,
+                    job=member.job,
+                    department=member.department,
+                )
+            )
 
     def _create_movie_from_tmdb(self, tmdb_movie) -> Movie:
         return Movie(
