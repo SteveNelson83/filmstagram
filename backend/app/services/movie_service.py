@@ -1,12 +1,16 @@
 from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import case, func
 
 from app.models.movie import Movie
 from app.models.movie_cast import MovieCast
 from app.models.movie_crew import MovieCrew
+from app.models.person import Person
 from app.schemas.tmdb import TmdbCastMember, TmdbMovie
+from app.schemas.movie import CastPreview, MoviePreviewResponse, MovieSearchResult
 from app.services.genre_service import GenreService
 from app.services.person_service import PersonService
 from app.services.tmdb_client import TmdbClient
+from app.utils.tmdb_images import poster_url_from_path
 
 TOP_CAST_COUNT = 5
 DIRECTOR_JOB = "Director"
@@ -108,6 +112,42 @@ class MovieService:
                 )
             )
 
+    def get_movie_preview(self, movie_id: int) -> MoviePreviewResponse | None:
+        movie = self.get_movie(movie_id)
+        if movie is None:
+            return None
+
+        cast_rows = (
+            self.db.query(Person.name, MovieCast.character)
+            .join(MovieCast, MovieCast.person_id == Person.id)
+            .filter(MovieCast.movie_id == movie_id)
+            .order_by(MovieCast.order)
+            .all()
+        )
+
+        director_rows = (
+            self.db.query(Person.name)
+            .join(MovieCrew, MovieCrew.person_id == Person.id)
+            .filter(
+                MovieCrew.movie_id == movie_id,
+                MovieCrew.job == DIRECTOR_JOB,
+            )
+            .all()
+        )
+
+        return MoviePreviewResponse(
+            id=movie.id,
+            poster_path=movie.poster_path,
+            poster_url=poster_url_from_path(movie.poster_path),
+            title=movie.title,
+            release_year=movie.release_date.year if movie.release_date else None,
+            directors=[name for (name,) in director_rows],
+            top_cast=[
+                CastPreview(name=name, character=character)
+                for name, character in cast_rows
+            ],
+        )
+
     def _create_movie_from_tmdb(self, tmdb_movie) -> Movie:
         return Movie(
             tmdb_id=tmdb_movie.id,
@@ -148,13 +188,38 @@ class MovieService:
             .first()
         )
 
-    def search_movies(self, query: str):
-        return (
+    def search_movies(self, query: str, limit: int = 20) -> list[MovieSearchResult]:
+        trimmed = query.strip()
+        if not trimmed:
+            return []
+
+        pattern = f"%{trimmed}%"
+        q_lower = trimmed.lower()
+
+        relevance = case(
+            (func.lower(Movie.title) == q_lower, 0),
+            (func.lower(Movie.title).like(f"{q_lower}%"), 1),
+            else_=2,
+        )
+
+        movies = (
             self.db.query(Movie)
-            .options(joinedload(Movie.genres))
-            .filter(Movie.title.ilike(f"%{query}%"))
+            .filter(Movie.title.ilike(pattern))
+            .order_by(relevance, Movie.title)
+            .limit(limit)
             .all()
         )
+        
+        return [
+            MovieSearchResult(
+                id=m.id,
+                title=m.title,
+                release_year=m.release_date.year if m.release_date else None,
+                poster_path=m.poster_path,
+                poster_url=poster_url_from_path(m.poster_path),
+            )
+            for m in movies
+        ]
 
     def exists_by_tmdb_id(self, tmdb_id: int) -> bool:
         return (

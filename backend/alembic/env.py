@@ -12,6 +12,7 @@ from app.models.movie_genres import MovieGenres  # noqa: F401
 from app.models.person import Person  # noqa: F401
 from app.models.movie_cast import MovieCast  # noqa: F401
 from app.models.movie_crew import MovieCrew  # noqa: F401
+from app.models.post import Post # noqa: F401
 
 config = context.config
 
