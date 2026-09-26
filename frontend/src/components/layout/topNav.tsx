@@ -7,13 +7,14 @@ const tabs = [
   { href: "/feed", label: "Feed" },
   { href: "/discover", label: "Discover" },
   { href: "/profile", label: "Profile" },
+  { href: "/create-post", label: "Create a Post" },
 ];
 
 export function TopNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex h-16 items-center justify-center gap-8 border-b">
+    <nav className="flex h-16 items-center justify-center gap-8 bg-slate-500">
       {tabs.map((tab) => (
         <Link
           key={tab.href}
