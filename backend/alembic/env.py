@@ -13,6 +13,8 @@ from app.models.person import Person  # noqa: F401
 from app.models.movie_cast import MovieCast  # noqa: F401
 from app.models.movie_crew import MovieCrew  # noqa: F401
 from app.models.post import Post # noqa: F401
+from app.models.follow import Follow # noqa: F401
+from app.models.user import User # noqa: F401
 
 config = context.config
 

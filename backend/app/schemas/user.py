@@ -28,4 +28,12 @@ class UserResponse(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str = "Bearer"
+
+class UserCardResponse(BaseModel):
+    id: int
+    username: str
+    avatar_url: str | None = None
+    is_following: bool = False
+
+    model_config = ConfigDict(from_attributes=True)
     

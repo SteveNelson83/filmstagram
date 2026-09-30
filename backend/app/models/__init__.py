@@ -5,4 +5,5 @@ from app.models.person import Person
 from app.models.movie_cast import MovieCast
 from app.models.movie_crew import MovieCrew
 from app.models.post import Post
+from app.models.follow import Follow
 from app.models.user import User # noqa: F401

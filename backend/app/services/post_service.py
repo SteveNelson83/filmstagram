@@ -1,7 +1,8 @@
 from sqlalchemy.orm import Session
 from app.models.post import Post
-from app.schemas.post import PostCreate, PostResponse
 from app.models.user import User
+from app.models.follow import Follow
+from app.schemas.post import PostCreate, PostResponse
 from app.services.movie_service import MovieService
 
 
@@ -44,3 +45,23 @@ class PostService:
             author=post.user,
             movie=movie_preview,
         )
+
+    def get_feed(
+        self,
+        current_user: User,
+        limit: int = 30,
+        offset: int = 0,
+    ) -> tuple[list[Post], bool]:
+        rows = (
+            self.db.query(Post)
+            .join(Follow, Follow.following_id == Post.user_id)
+            .filter(Follow.follower_id == current_user.id)
+            .order_by(Post.created_at.desc(), Post.id.desc())
+            .offset(offset)
+            .limit(limit + 1)
+            .all()
+        )
+
+        has_more = len(rows) > limit
+        posts = rows[:limit]
+        return posts, has_more

@@ -25,3 +25,10 @@ class PostResponse(BaseModel):
     movie: MoviePreviewResponse
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class PostFeedResponse(BaseModel):
+    items: list[PostResponse]
+    has_more: bool
+    next_offset: int | None = None
+    
