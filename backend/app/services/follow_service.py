@@ -10,9 +10,19 @@ class FollowService:
         self.db = db
 
     def get_suggestions(self, current_user: User, limit: int = 3) -> list[User]:
+        followed_subq = (
+            self.db.query(Follow.following_id)
+            .filter(Follow.follower_id == current_user.id)
+            .subquery()
+        )
+
         return (
             self.db.query(User)
-            .filter(User.id != current_user.id, User.is_active.is_(True))
+            .filter(
+                User.id != current_user.id,
+                User.is_active.is_(True),
+                ~User.id.in_(self.db.query(followed_subq.c.following_id)),
+            )
             .order_by(User.id)
             .limit(limit)
             .all()

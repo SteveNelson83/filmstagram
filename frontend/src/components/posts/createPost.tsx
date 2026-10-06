@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, type SubmitEvent } from "react";
 import { useAuth } from "@/context/authContext";
 import {
     getMoviePreview,
@@ -75,7 +75,7 @@ export function CreatePost() {
         }
     }
 
-    async function handleSubmit(e: FormEvent) {
+    async function handleSubmit(e: SubmitEvent) {
         e.preventDefault();
         if (!token || !selectedMovie) return;
 
@@ -130,7 +130,7 @@ export function CreatePost() {
                                     <button
                                         type="button"
                                         onClick={() => selectMovie(movie)}
-                                        className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-slate-50"
+                                        className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-slate-50 cursor-pointer"
                                     >
                                         {movie.poster_url && (
                                             <img
