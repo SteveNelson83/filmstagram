@@ -8,10 +8,10 @@ export function FeedLayout({
     right: React.ReactNode;
 }) {
     return (
-        <div className="grid min-h-[calc(100vh-4rem)] grid-cols-12">
-            <aside className="col-span-3 bg-indigo-900">{left}</aside>
-            <main className="col-span-6">{center}</main>
-            <aside className="col-span-3 bg-indigo-900">{right}</aside>
+        <div className="grid h-full min-h-0 overflow-hidden grid-cols-12">
+            <aside className="col-span-3 h-full bg-indigo-900">{left}</aside>
+            <main className="col-span-6 h-full min-h-0 overflow-y-auto feed-scroll">{center}</main>
+            <aside className="col-span-3 h-full bg-indigo-900">{right}</aside>
         </div>
     );
 }

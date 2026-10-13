@@ -7,12 +7,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     return (
         <>
             <ProtectedLayout>
-                <TopNav />
-                <FeedLayout
-                    left={<div>Left sidebar (suggestions, etc.)</div>}
-                    center={children}
-                    right={<RightSidebar />}
-                />
+                <div className="flex h-screen flex-col overflow-hidden">
+                    <div className="text-center text-4xl bg-indigo-900 py-4">Filmstagram</div>
+                    <TopNav />
+                    <div className="min-h-0 flex-1 overflow-hidden">
+                        <FeedLayout
+                            left={<div>Under Construction</div>}
+                            center={children}
+                            right={<RightSidebar />}
+                        />
+                    </div>
+                </div>
             </ProtectedLayout>
         </>
     );

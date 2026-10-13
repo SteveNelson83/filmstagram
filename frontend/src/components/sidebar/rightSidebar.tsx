@@ -50,7 +50,7 @@ export function RightSidebar() {
     }
 
     return (
-        <div className="space-y-6 px-4 py-20 flex flex-col justify-around h-3/4">
+        <div className="space-y-6 px-4 py-20 flex flex-col justify-around">
             {followError && (
                 <p className="text-sm text-red-400">{followError}</p>
             )}
